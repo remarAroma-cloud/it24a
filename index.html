@@ -3,10 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Todolist</title>
 </head>
 <body>
-    <h1>Hello World</h1>
-    <h1>Hello World</h1>
+
+    <h4>Todo list</h4>
+    <input type="text"
+           id="taskInput"
+           placeholder="add a task"  
+    />
+    <button oneclick="addtask()">Add task</button>
+    <ul id="tasklist">Your task go here ...</ul>
+    
+<script>
+function getTaskText(){
+    const input = document.getElementById('taskInput');
+    const text = input.value.traim();
+
+    console.log("The input value is:" + Input.value);
+    return text;
+}
+function addTask(){
+    const taskText = getTaskText();
+    addTaskItem(TaskText);
+}
+function addTaskItem(taskText){
+    const li = document.createElement('li');
+    const taskSpan = document.createElement('span');
+    li.appendchild(taskSpan);
+
+    document.getElementById('taskList').appendChild(li);
+}
+ </script>
+
 </body>
 </html>
