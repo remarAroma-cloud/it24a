@@ -31,22 +31,38 @@
    
    
    function initMap(mapDataUrl) {
+    //Render map
     const map = L.map('map').setView([8.360, 124.868], 17);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-       maxZoom: 19,
-       attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    }).addTo(map);
-    //Render pins
+   
+    //OpenStreetMap tile Layer
+    const openStreetMapLayer = L.tileLayer('https://tiles.openstreetmap.org/{z}/{x}/{y}.png',{
+        maxZoom: 19,
+        attribution:'&copy; <a href="http://www.openstreetmap.org/copyright">openstreetmap</a>'
+    });
+
+    //satellite Layer
+    const satelite = L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/world_imagery/MapServer/title/{Z}/{y}/{x}',
+        {attribution: 'Tiles (c) Esri-, Maxar, Earthstar Geographics, & GIS User Community '}
+    );
+
+
+
+    
+
+    //Render Pins
      fetch(mapDataUrl)
      .then(response=>response.json())
      .then(data=>{
        
             data.forEach(pin=>{
                  const marker = L.marker([pin.lat,pin.lng]).addTo(map);
+
                  const image= ` <img src=' ${pin.image}' class ="popup-image">`;
+
                  marker.bindPopup(`
-                ${pin.title} <br> 
+                    ${pin.title} <br> 
                 <hr>
                 ${image}
                  `);
@@ -55,9 +71,15 @@
 
        
      });
-   }
+    }
+    //Layer Control
+    const  baseMaps ={
+        "OpenStreetMap": openStreetMap,
+        "Satellite": Satellite
+    }
    
 initMap('campus-map.json');
+
 
 
 
