@@ -1,0 +1,212 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Forecast App</title>
+</head>
+
+<body>
+
+    <h1>Weather Forecast Application</h1>
+
+    <h2>Select Location</h2>
+
+    <button onclick="getGPSLocation()">Use My GPS</button>
+    <button onclick="getWeather()">Manual Location</button>
+
+    <p id="locationResult"></p>
+
+    <div id="weatherResult"></div>
+
+    <div id="forecastResult"></div>
+
+    <script>
+        const apiKey = "8ba8d3cf763f1400477ef5b45bfccdd1";
+
+        // MANUAL LOCATION
+        async function getWeather() {
+            const city = prompt("Enter a city name:");
+
+            if (!city || !city.trim()) {
+                alert("Please enter a city name.");
+                return;
+            }
+
+            const url =
+                `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city.trim())}&appid=${apiKey}&units=metric`;
+
+            try {
+                document.getElementById("locationResult").textContent =
+                    "Searching for location...";
+
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    throw new Error(
+                        response.status === 404
+                            ? "City not found. Please try again."
+                            : "Unable to retrieve weather. Check your API key."
+                    );
+                }
+
+                const data = await response.json();
+
+                await getWeatherByCoordinates(
+                    data.coord.lat,
+                    data.coord.lon
+                );
+
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        // GPS LOCATION
+        function getGPSLocation() {
+            if (!navigator.geolocation) {
+                alert("Geolocation is not supported by your browser.");
+                return;
+            }
+
+            document.getElementById("locationResult").textContent =
+                "Getting your location...";
+
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+
+                    getWeatherByCoordinates(latitude, longitude);
+                },
+
+                function(error) {
+                    showError("GPS Error: " + error.message);
+                },
+
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        }
+
+        // GET WEATHER USING COORDINATES
+        async function getWeatherByCoordinates(latitude, longitude) {
+            const weatherUrl =
+                `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=metric`;
+
+            const forecastUrl =
+                `https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=metric`;
+
+            try {
+                document.getElementById("locationResult").textContent =
+                    "Loading weather information...";
+
+                // CURRENT WEATHER
+                const weatherResponse = await fetch(weatherUrl);
+
+                if (!weatherResponse.ok) {
+                    throw new Error("Unable to retrieve current weather.");
+                }
+
+                const data = await weatherResponse.json();
+
+                document.getElementById("locationResult").textContent =
+                    `Location: ${data.name}, ${data.sys.country}`;
+
+                document.getElementById("weatherResult").innerHTML = `
+                    <div>
+                        <h2>Current Weather</h2>
+                        <h3>${data.name}, ${data.sys.country}</h3>
+
+                        <img
+                            src="https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png"
+                            alt="Weather icon">
+
+                        <h2>${data.main.temp} °C</h2>
+                        <p>Weather: ${data.weather[0].description}</p>
+                        <p>Humidity: ${data.main.humidity}%</p>
+                        <p>Wind Speed: ${data.wind.speed} m/s</p>
+                    </div>
+                `;
+
+                // 5-DAY FORECAST
+                const forecastResponse = await fetch(forecastUrl);
+
+                if (!forecastResponse.ok) {
+                    throw new Error("Unable to retrieve weather forecast.");
+                }
+
+                const forecastData = await forecastResponse.json();
+
+                const forecastResult =
+                    document.getElementById("forecastResult");
+
+                forecastResult.innerHTML = `
+                    <h2>5-Day Weather Forecast</h2>
+                    <div id="forecastContainer"></div>
+                `;
+
+                const forecastContainer =
+                    document.getElementById("forecastContainer");
+
+                // Get one forecast per day at 12:00 PM
+                const dailyForecasts = forecastData.list.filter(item =>
+                    item.dt_txt.includes("12:00:00")
+                );
+
+                dailyForecasts.forEach(item => {
+                    const date = new Date(item.dt_txt);
+
+                    const formattedDate = date.toLocaleDateString(
+                        "en-US",
+                        {
+                            weekday: "short",
+                            month: "short",
+                            day: "numeric"
+                        }
+                    );
+
+                    forecastContainer.innerHTML += `
+                        <div>
+                            <h3>${formattedDate}</h3>
+
+                            <img
+                                src="https://openweathermap.org/img/wn/${item.weather[0].icon}@2x.png"
+                                alt="Weather icon">
+
+                            <h3>${item.main.temp} °C</h3>
+                            <p>${item.weather[0].description}</p>
+                            <p>Humidity: ${item.main.humidity}%</p>
+                            <p>Wind: ${item.wind.speed} m/s</p>
+                        </div>
+                    `;
+                });
+
+                if (dailyForecasts.length === 0) {
+                    forecastContainer.textContent =
+                        "No daily forecast data available.";
+                }
+
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        // DISPLAY ERRORS
+        function showError(message) {
+            document.getElementById("locationResult").textContent =
+                "Unable to load weather information.";
+
+            document.getElementById("weatherResult").innerHTML =
+                `<p>${message}</p>`;
+
+            document.getElementById("forecastResult").innerHTML = "";
+        }
+    </script>
+
+</body>
+</html>
